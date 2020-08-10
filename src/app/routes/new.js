@@ -232,17 +232,6 @@ module.exports = app => {
     app.post('/pendingproduct', (req, res) => {
 
         connection.query('SELECT asin_code FROM product where name IS NULL', (error, result) => {
-            // function playRecording3() {
-            //     while (result.length > 0) {
-            //         chunk = result.splice(0, 2);
-            //         for (var i = 0; i < chunk.length; i++) {
-            //             var item = user_agent[Math.floor(Math.random() * user_agent.length)];
-            //             var contador = Math.round(Math.random() * (5000 - 20000));
-            //             playNote(chunk[i].asin_code, contador, item);
-            //         }
-            //     };
-            // }
-
             function playRecording3() {
                 for (var i = 0; i < result.length; i++) {
                     var item = user_agent[Math.floor(Math.random() * user_agent.length)];
