@@ -231,45 +231,83 @@ module.exports = app => {
 
     app.post('/pendingproduct', (req, res) => {
 
-        connection.query('SELECT asin_code FROM product where name IS NULL', (error, result) => {
+        const putRequest = async (url, userAgent) => {
+              try {
+                request(
+                  {
+                    url: url,
+                    method: "GET",
+                    headers: {
+                        'User-Agent': userAgent
+                    },
+                  },
+                  (err, response, body) => {                      
+                    if(err){
+                        return {
+                            status:400,
+                            error:err,
+                        }
+                    } 
+                    return {
+                        body,
+                        status:200,
+                            };                  
+                  }
+                );
+              } catch (err) {
+                    return {
+                        status:400,
+                        error:err.message,
+                    }  
+              }
+          };
+
+        connection.query('SELECT asin_code FROM product WHERE NAME = "" OR NAME IS NULL;', (error, result) => {
             function playRecording3() {
                 for (var i = 0; i < result.length; i++) {
-                    var item = user_agent[Math.floor(Math.random() * user_agent.length)];
-                    playNote(result[i].asin_code, i, item);
+                    try {
+                        var item = user_agent[Math.floor(Math.random() * user_agent.length)];                    
+                        playNote(result[i].asin_code, i, item);
+                    } catch (error) {
+                        console.log("error juan:",error.message);
+                    }
+                    
                 };
             }
-
+        
             async function playNote(asin, i, item) {
                 setTimeout(async function() {
                     console.log(asin);
-                    const url = 'https://www.amazon.com/-/es/dp/' + asin;
-                    const response = await request({
-                        uri: url,
-                        headers: {
-                            'User-Agent': item
-                        },
-                        gzip: true
-                    });
-                    let $ = cheerio.load(response);
+                    const url = 'https://www.amazon.com/-/es/dp/' + asin;                    
+                    const response = await putRequest(url, item);   
 
-                    let title = $('#productTitle').text().trim();
-                    let imagen = $('#imgTagWrapperId img').attr('src');
-                    let precio = $('.a-span12 #priceblock_ourprice') ? $('.a-span12 #priceblock_ourprice').text() : "";
-                    let peso_prod = $('#productDetails_detailBullets_sections1 > tbody > tr:nth-child(2) > td').text();
+                    
+                    if(response !== undefined && response !== "undefined"){
+                        console.log("entro");
+                        let $ = cheerio.load(response);
+                        let title = $('#productTitle').text().trim();
+                        let imagen = $('#imgTagWrapperId img').attr('src');
+                        let precio = $('.a-span12 #priceblock_ourprice') ? $('.a-span12 #priceblock_ourprice').text() : "";
+                        let peso_prod = $('#productDetails_detailBullets_sections1 > tbody > tr:nth-child(2) > td').text();
 
-                    peso_prod = peso_prod.replace(/[^0-9|\.]/g, '').trim();
-                    precio = precio.replace('US$', '').trim();
+                        peso_prod = peso_prod.replace(/[^0-9|\.]/g, '').trim();
+                        precio = precio.replace('US$', '').trim();
 
-                    connection.query('UPDATE product SET? WHERE asin_code=' + "'" + asin + "'", {
-                        name: title,
-                        img: imagen,
-                        cost: precio,
-                        shipping_weight: peso_prod,
-                        active: precio ? 1 : 0,
+                        connection.query('UPDATE product SET? WHERE asin_code=' + "'" + asin + "'", {
+                            name: title,
+                            img: imagen,
+                            cost: precio,
+                            shipping_weight: peso_prod,
+                            active: precio ? 1 : 0,
 
-                    }), (err, result) => {
-                        console.log(err.StatusCodeError);
-                    }
+                        }), (err, result) => {
+                            console.log(err.StatusCodeError);
+                        }
+                    }else{
+                        console.log("respuesta",response);
+                    };
+
+                    
                 }, 15000 * i);
             }
             playRecording3();
