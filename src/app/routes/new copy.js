@@ -5,31 +5,38 @@ const puppeteer = require('puppeteer');
 const cheerio = require('cheerio');
 const request = require('request-promise');
 
-
-//libreria pendiente
-// const request = require('request');
-// const putRequest = async () => {
-//     return new Promise((resolve, reject) => {
-//          try {
-//              request({
-//                  url: `https://comm.mutek.io/api/aaCommunicationsScheduleSent/sent`,
-//                  method: "GET",
-//                  headers: { 
-//                      'Content-Type': 'application/json'
-//                  },
-//              },
-//              (err, response, body) => {
-//                  if (err) return reject(err);
-//                  resolve(body);
-//              });
-//          } catch (error) {
-//              return reject(error);
-//          }
-//      });
-//  };
-
 module.exports = app => {
     const connection = dbConnection();
+    const putRequest = async (url, userAgent) => {
+        try {
+          request(
+            {
+              url: url,
+              method: "GET",
+              headers: {
+                  'User-Agent': userAgent
+              },
+            },
+            (err, response, body) => {                      
+              if(err){
+                  return {
+                      status:400,
+                      error:err,
+                  }
+              } 
+              return {
+                  body,
+                  status:200,
+                      };                  
+            }
+          );
+        } catch (err) {
+              return {
+                  status:400,
+                  error:err.message,
+              }  
+        }
+    };
     var user_agent = [
         "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.36",
         "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:53.0) Gecko/20100101 Firefox/53.0",
@@ -48,6 +55,7 @@ module.exports = app => {
     });
 
     app.post('/product', (req, res) => {
+
         const { asin_code } = req.body;
         const url = 'https://www.amazon.com/dp/' + asin_code;
         var item = user_agent[Math.floor(Math.random() * user_agent.length)];
@@ -78,36 +86,29 @@ module.exports = app => {
                 });
                 console.log(data);
                 await browser.close();
+                connection.query('INSERT INTO product SET?', {
+                    asin_code: asin_code,
+                    name: data.title,
+                    img: data.imagen,
+                    cost: data.precio,
+                    shipping_weight: data.peso_prod,
+                    active: data.precio ? 1 : 0,
 
-                
+                }), (err, result) => {
+                    res.redirect('/');
+                }
+                connection.query('UPDATE product SET? WHERE asin_code=' + "'" + asin + "'", {
+                    name: data.title,
+                    img: data.imagen,
+                    cost: data.precio,
+                    shipping_weight: data.peso_prod,
+                    active: data.precio ? 1 : 0,
 
-                connection.query('SELECT * FROM product WHERE asin_code =' + "'" + asin_code + "LIMIT 1'", (error, result) => {
-                    if(result){
-                        connection.query('UPDATE product SET? WHERE asin_code=' + "'" + asin_code + "'", {
-                            name: data.title,
-                            img: data.imagen,
-                            cost: data.precio,
-                            shipping_weight: data.peso_prod,
-                            active: data.precio ? 1 : 0,
-        
-                        }), (err, result) => {
-                            res.redirect('/');
-                        }
+                }), (err, result) => {
+                    res.redirect('/');
+                }
 
-                    }else{
-                        connection.query('INSERT INTO product SET?', {
-                            asin_code: asin_code,
-                            name: data.title,
-                            img: data.imagen,
-                            cost: data.precio,
-                            shipping_weight: data.peso_prod,
-                            active: data.precio ? 1 : 0,
-        
-                        }), (err, result) => {
-                            res.redirect('/');
-                        }
-                    }
-                });          
+
                 res.redirect('/');
 
             } catch (error) {
@@ -119,8 +120,9 @@ module.exports = app => {
 
 
     app.post('/allproduct', (req, res) => {
-        connection.query('SELECT * FROM product WHERE img = "" OR img IS NULL ORDER BY id DESC', (error, result) => {
+        connection.query('SELECT * FROM product', (error, result) => {
             console.log(result.length);
+
 
             function playRecording() {
                 for (var i = 0; i < result.length; i++) {
@@ -133,7 +135,6 @@ module.exports = app => {
                 setTimeout(function() {
                     (async() => {
                         const url = 'https://www.amazon.com/dp/' + asin;
-                        console.log(asin);
 
                         let browser = await puppeteer.launch();
                         let page = await browser.newPage();
@@ -170,6 +171,7 @@ module.exports = app => {
                             }), (err, result) => {
                                 res.redirect('/');
                             }
+                            console.log("termino");
                             res.redirect('/');
 
                         } catch (error) {
@@ -257,41 +259,10 @@ module.exports = app => {
         // }
     });
 
-    app.post('/pendingproduct', (req, res) => {
-
-        const putRequest = async (url, userAgent) => {
-              try {
-                request(
-                  {
-                    url: url,
-                    method: "GET",
-                    headers: {
-                        'User-Agent': userAgent
-                    },
-                  },
-                  (err, response, body) => {                      
-                    if(err){
-                        return {
-                            status:400,
-                            error:err,
-                        }
-                    } 
-                    return {
-                        body,
-                        status:200,
-                            };                  
-                  }
-                );
-              } catch (err) {
-                    return {
-                        status:400,
-                        error:err.message,
-                    }  
-              }
-          };
+    app.post('/pendingproduct', (req, res) => {       
 
         connection.query('SELECT asin_code FROM product WHERE NAME = "" OR NAME IS NULL;', (error, result) => {
-            function playRecording3() {
+            function playRecording() {
                 for (var i = 0; i < result.length; i++) {
                     try {
                         var item = user_agent[Math.floor(Math.random() * user_agent.length)];                    
@@ -306,7 +277,7 @@ module.exports = app => {
             async function playNote(asin, i, item) {
                 setTimeout(async function() {
                     console.log(asin);
-                    const url = 'https://www.amazon.com/dp/' + asin;                    
+                    const url = 'https://www.amazon.com/-/es/dp/' + asin;                    
                     const response = await putRequest(url, item);   
 
                     
@@ -338,7 +309,7 @@ module.exports = app => {
                     
                 }, 15000 * i);
             }
-            playRecording3();
+            playRecording();
 
             res.redirect('/');
 
