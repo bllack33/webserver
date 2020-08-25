@@ -29,12 +29,28 @@
     </nav>
     <div class="container-fluid">
         <div class="row">
-            <div class="col-md-8 mt-4 text-center">
+            <div class="col-md-12 mt-4">
+                <!-- <form action="/product" method="post" class="card-body">
+                    <h3 class="cart-title">add asin</h3>
+                    <div class="form-group">
+                        <input type="text" name="asin_code" class="form-control col-md-3" placeholder="ASIN">
+                    </div>
+                    <input type="submit" class="col-md-3 btn btn-primary">
+                </form> -->
+                <form action="/allproduct" method="post" class="card-body">
+                    <input type="submit" class="col-md-3 btn btn-dark" value="Validar todos">
+                </form>
+                <!-- <form action="/pendingproduct" method="post" class="card-body">
+                    <input type="submit" class="col-md-6 btn btn-dark" value="pendingproduct">
+                </form> -->
+            </div>
+            <div class="table-responsive">
                 <table class="table table-striped">
                     <tr>
                         <th>id</th>
                         <th>asin</th>
                         <th>nombre</th>
+                        <th>descripción</th>
                         <th>imagen</th>
                         <th>precio</th>
                         <th>peso</th>
@@ -47,9 +63,14 @@
                             </td>
                             <td>
                                 <%= product[i].asin_code %>
-                            </td>
+                            </td>                            
                             <td>
                                 <%= product[i].name %>
+                            </td>
+                            <td>
+                                <p class="overflow-ellipsis">
+                                    <%= product[i].description %>
+                                </p>
                             </td>
                             <td>
                                 <div>
@@ -69,22 +90,7 @@
                         </tr>
                         <% } %>
                 </table>
-            </div>
-            <div class="col-md-4 mt-4 card" style="height: 50%;">
-                <form action="/product" method="post" class="card-body">
-                    <h3 class="cart-title">add asin</h3>
-                    <div class="form-group">
-                        <input type="text" name="asin_code" class="form-control" placeholder="ASIN">
-                    </div>
-                    <input type="submit" class="col-md-6 btn btn-primary">
-                </form>
-                <form action="/allproduct" method="post" class="card-body">
-                    <input type="submit" class="col-md-6 btn btn-dark" value="Validar todos">
-                </form>
-                <form action="/pendingproduct" method="post" class="card-body">
-                    <input type="submit" class="col-md-6 btn btn-dark" value="pendingproduct">
-                </form>
-            </div>
+            </div>            
         </div>
     </div>
 
