@@ -52,20 +52,28 @@ module.exports = app => {
             try {
                 let data = await page.evaluate(() => {
                     let title = document.querySelector('#productTitle') ? document.querySelector('#productTitle').innerText : "";
-                    let imagen = document.querySelectorAll('.imgTagWrapper img.a-dynamic-image') ? document.querySelectorAll('.imgTagWrapper img.a-dynamic-image')[0].src : "";
-                    let description = document.querySelector('#feature-bullets').textContent ?document.querySelector('#feature-bullets').textContent.trim():"";
+                    let imagen = document.querySelectorAll('#main-image-container > ul li img')[0].src;
+                    let description;
+                    var tamano = document.querySelectorAll('#feature-bullets ul li').length;
+                    for (i = 1; i < tamano; ++i) {
+                        var valor = document.querySelectorAll('#feature-bullets ul li')[i].innerText;
+                        description = valor ? description + "- " + valor : "";
+                    }
                     let precio = document.querySelector('.a-span12 #priceblock_ourprice') ? document.querySelector('.a-span12 #priceblock_ourprice').innerText : "";
-                    let imagen_dos = document.querySelector('#main-image-container > ul > li.image.item.itemNo1.maintain-height.selected > span > span > div > img')?document.querySelector('#main-image-container > ul > li.image.item.itemNo1.maintain-height.selected > span > span > div > img').src:"";
+                    let precio_dos = document.querySelector('.a-span12 #priceblock_saleprice') ? document.querySelector('.a-span12 #priceblock_saleprice').innerText : "";
+                    let imagen_dos = document.querySelector('#main-image-container > ul > li.image.item.itemNo1.maintain-height.selected > span > span > div > img') ? document.querySelector('#main-image-container > ul > li.image.item.itemNo1.maintain-height.selected > span > span > div > img').src : "";
                     let peso_prod = "";
-                    description = description.replace('P.when("ReplacementPartsBulletLoader").execute(function(module){ module.initializeDPX(); })', '').trim();
+                    description = description.replace('undefined', '').trim();
                     title = title.replace('Amazon', 'Tienda').trim();
+                    precio_dos = precio_dos.replace('US$', '').trim();
                     precio = precio.replace('US$', '').trim();
+                    precio_final = precio ? precio : precio_dos;
                     return {
                         title,
                         description,
                         imagen,
                         imagen_dos,
-                        precio,
+                        precio: precio_final,
                         peso_prod,
                     }
 
@@ -83,6 +91,7 @@ module.exports = app => {
                             cost: data.precio,
                             shipping_weight: data.peso_prod,
                             active: data.precio ? 1 : 0,
+                            update: new Date(),
 
                         }), (err, result) => {
                             res.redirect('/');
@@ -97,6 +106,7 @@ module.exports = app => {
                             cost: data.precio,
                             shipping_weight: data.peso_prod,
                             active: data.precio ? 1 : 0,
+                            create: new Date(),
 
                         }), (err, result) => {
                             res.redirect('/');
@@ -113,7 +123,7 @@ module.exports = app => {
     });
 
     app.post('/allproduct', (req, res) => {
-        connection.query('SELECT * FROM product', (error, result) => {
+        connection.query('SELECT * FROM product WHERE CAST(`update` AS DATE) < CURDATE() OR `update` IS NULL;', (error, result) => {
             console.log(result.length);
 
             function playRecording() {
@@ -138,24 +148,35 @@ module.exports = app => {
                         try {
                             let data = await page.evaluate(() => {
                                 let title = document.querySelector('#productTitle') ? document.querySelector('#productTitle').innerText : "";
-                                let imagen = document.querySelectorAll('.imgTagWrapper img.a-dynamic-image') ? document.querySelectorAll('.imgTagWrapper img.a-dynamic-image')[0].src : "";
-                                let description = document.querySelector('#feature-bullets').textContent ?document.querySelector('#feature-bullets').textContent.trim():"";
+                                let imagen = document.querySelectorAll('#main-image-container > ul li img')[0].src;
+
+                                var tamano = document.querySelectorAll('#feature-bullets ul li').length;
+                                let description;
+                                for (i = 1; i < tamano; ++i) {
+                                    var valor = document.querySelectorAll('#feature-bullets ul li')[i].innerText;
+                                    description = valor ? description + "- " + valor : "";
+                                }
+
                                 let precio = document.querySelector('.a-span12 #priceblock_ourprice') ? document.querySelector('.a-span12 #priceblock_ourprice').innerText : "";
-                                let imagen_dos = document.querySelector('#main-image-container > ul > li.image.item.itemNo1.maintain-height.selected > span > span > div > img')?document.querySelector('#main-image-container > ul > li.image.item.itemNo1.maintain-height.selected > span > span > div > img').src:"";
+                                let precio_dos = document.querySelector('.a-span12 #priceblock_saleprice') ? document.querySelector('.a-span12 #priceblock_saleprice').innerText : "";
+                                let imagen_dos = document.querySelector('#main-image-container > ul > li.image.item.itemNo1.maintain-height.selected > span > span > div > img') ? document.querySelector('#main-image-container > ul > li.image.item.itemNo1.maintain-height.selected > span > span > div > img').src : "";
                                 let peso_prod = "";
-                                description = description.replace('P.when("ReplacementPartsBulletLoader").execute(function(module){ module.initializeDPX(); })', '').trim();
+                                description = description.replace('undefined', '').trim();
                                 title = title.replace('Amazon', 'Tienda').trim();
+                                precio_dos = precio_dos.replace('US$', '').trim();
                                 precio = precio.replace('US$', '').trim();
+                                precio_final = precio ? precio : precio_dos;
                                 return {
                                     title,
                                     description,
                                     imagen,
                                     imagen_dos,
-                                    precio,
+                                    precio: precio_final,
                                     peso_prod,
                                 }
 
                             });
+                            //console.log(data);
                             console.log(data.title ? "exito" : "fail");
                             await browser.close();
 
@@ -169,7 +190,8 @@ module.exports = app => {
                                         cost: data.precio,
                                         shipping_weight: data.peso_prod,
                                         active: data.precio ? 1 : 0,
-            
+                                        update: new Date(),
+
                                     }), (err, result) => {
                                         res.redirect('/');
                                     }
@@ -183,7 +205,8 @@ module.exports = app => {
                                         cost: data.precio,
                                         shipping_weight: data.peso_prod,
                                         active: data.precio ? 1 : 0,
-            
+                                        create: new Date(),
+
                                     }), (err, result) => {
                                         res.redirect('/');
                                     }
@@ -208,7 +231,7 @@ module.exports = app => {
 
     app.post('/pendingproduct', (req, res) => {
 
-        connection.query('SELECT * FROM product', (error, result) => {
+        connection.query('SELECT * FROM product WHERE CAST(`update` AS DATE) < CURDATE() OR `update` IS NULL;', (error, result) => {
             console.log(result.length);
 
             function playRecording() {
@@ -261,7 +284,7 @@ module.exports = app => {
                                         cost: data.precio,
                                         shipping_weight: data.peso_prod,
                                         active: data.precio ? 1 : 0,
-            
+
                                     }), (err, result) => {
                                         res.redirect('/');
                                     }
@@ -274,7 +297,7 @@ module.exports = app => {
                                         cost: data.precio,
                                         shipping_weight: data.peso_prod,
                                         active: data.precio ? 1 : 0,
-            
+
                                     }), (err, result) => {
                                         res.redirect('/');
                                     }
