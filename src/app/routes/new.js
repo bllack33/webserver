@@ -1,6 +1,7 @@
 const dbConnection = require('../../config/dbConnetion');
 const puppeteer = require('puppeteer');
 const excel = require('exceljs');
+const fs = require('fs');
 
 
 const cheerio = require('cheerio');
@@ -17,7 +18,6 @@ module.exports = app => {
         "Mozilla/5.0 (iPad; CPU OS 8_4_1 like Mac OS X) AppleWebKit/600.1.4 (KHTML, like Gecko) Version/8.0 Mobile/12H321 Safari/600.1.4",
         "Lynx/2.8.8pre.4 libwww-FM/2.14 SSL-MM/1.4.1 GNUTLS/2.12.23",
     ]
-
     var urls = [
         "https://www.amazon.com/-/es/dp/",
         "https://www.amazon.com/-/es/Nizoral-Anti-Dandruff-Shampoo-Ketoconazole-Dandruff/dp/",
@@ -324,7 +324,7 @@ module.exports = app => {
     });
 
     app.post('/downloadexcel', (req, res) => {
-        var fs = require('fs');
+        
 
         connection.query('SELECT * FROM product', (error, result) => {
             const jsonProducts = JSON.parse(JSON.stringify(result));
@@ -343,11 +343,21 @@ module.exports = app => {
                 { header: 'Fecha de actualizacion', key: 'update', width: 10, width: 30 }
             ];
             worksheet.addRows(jsonProducts);
-            let now = new Date();
+            const now = new Date();
+            const namefile = `${now.getTime()}productos.xlsx`;
+            const path = 'src/app/files/';
 
-            workbook.xlsx.writeFile(__dirname + `/${now.getTime()}productos.xlsx`)
+            workbook.xlsx.writeFile(path + namefile)            
                 .then(function() {
-                    console.log("file saved!");
+                    var files = fs.createReadStream(path + namefile);
+                    res.writeHead(200, {
+                    "Content-disposition": `attachment; filename=${namefile}`,
+                    }); //here you can specify file name
+                    files.pipe(res); // also you can set content-type
+                    //window.open(namefile, "_blank");
+                    setTimeout(function () {
+                        fs.unlinkSync(path + namefile);
+                      }, 5000);
                 });
         })
     });
