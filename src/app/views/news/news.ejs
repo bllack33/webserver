@@ -25,6 +25,7 @@
                 <input class="form-control mr-sm-2" type="text" name="asin_code" placeholder="Agregar ASIN" aria-label="Search">
                 <button class="btn btn-outline-success my-2 my-sm-0" type="submit">Agregar</button>
             </form>
+
         </div>
     </nav>
     <div class="container-fluid">
@@ -40,9 +41,9 @@
                 <form action="/allproduct" method="post" class="card-body">
                     <input type="submit" class="col-md-3 btn btn-dark" value="Validar todos">
                 </form>
-                <!-- <form action="/pendingproduct" method="post" class="card-body">
-                    <input type="submit" class="col-md-6 btn btn-dark" value="pendingproduct">
-                </form> -->
+                <form action="/downloadexcel" method="post" class="card-body">
+                    <input type="submit" class="col-md-3 btn btn-dark" value="Descargar CSV">
+                </form>
             </div>
             <div class="table-responsive">
                 <table class="table table-striped">
@@ -63,7 +64,7 @@
                             </td>
                             <td>
                                 <%= product[i].asin_code %>
-                            </td>                            
+                            </td>
                             <td>
                                 <%= product[i].name %>
                             </td>
@@ -90,7 +91,12 @@
                         </tr>
                         <% } %>
                 </table>
-            </div>            
+            </div>
+            <% if (status){ %>
+                <div class="alert alert-primary" role="alert">
+                    <% message %>
+                </div>
+                <% } %>
         </div>
     </div>
 

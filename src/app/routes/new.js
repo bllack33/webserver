@@ -1,5 +1,6 @@
 const dbConnection = require('../../config/dbConnetion');
 const puppeteer = require('puppeteer');
+const excel = require('exceljs');
 
 
 const cheerio = require('cheerio');
@@ -29,7 +30,9 @@ module.exports = app => {
         connection.query('SELECT * FROM product', (error, result) => {
             // console.log(result);
             res.render('news/news.ejs', {
-                product: result
+                product: result,
+                status: 1,
+                message: ""
             });
         })
     });
@@ -317,6 +320,35 @@ module.exports = app => {
 
 
             res.redirect('/');
+        })
+    });
+
+    app.post('/downloadexcel', (req, res) => {
+        var fs = require('fs');
+
+        connection.query('SELECT * FROM product', (error, result) => {
+            const jsonProducts = JSON.parse(JSON.stringify(result));
+            //console.log(jsonProducts);
+            let workbook = new excel.Workbook(); //creating workbook
+            let worksheet = workbook.addWorksheet('result'); //creating worksheet
+            worksheet.columns = [
+                { header: 'Id', key: 'id', width: 10 },
+                { header: 'ASIN', key: 'asin_code', width: 30 },
+                { header: 'Name', key: 'name', width: 30 },
+                { header: 'Description', key: 'description', width: 30 },
+                { header: 'Imagen', key: 'img', width: 10, width: 30 },
+                { header: 'Costo USD', key: 'cost', width: 10, width: 10 },
+                { header: 'Activo', key: 'active', width: 10, width: 10 },
+                { header: 'Fecha de creacion', key: 'create', width: 10, width: 30 },
+                { header: 'Fecha de actualizacion', key: 'update', width: 10, width: 30 }
+            ];
+            worksheet.addRows(jsonProducts);
+            let now = new Date();
+
+            workbook.xlsx.writeFile(__dirname + `/${now.getTime()}productos.xlsx`)
+                .then(function() {
+                    console.log("file saved!");
+                });
         })
     });
 }
