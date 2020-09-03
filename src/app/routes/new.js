@@ -323,8 +323,7 @@ module.exports = app => {
         })
     });
 
-    app.post('/downloadexcel', (req, res) => {
-        
+    app.post('/downloadexcel', (req, res) => {       
 
         connection.query('SELECT * FROM product', (error, result) => {
             const jsonProducts = JSON.parse(JSON.stringify(result));
