@@ -27,7 +27,7 @@ module.exports = app => {
         "https://www.amazon.com/-/es/Libbey-Mixologist-9-Piece-Cocktail-Set/dp/",
     ]
     app.get('/', (req, res) => {
-        connection.query('SELECT * FROM product', (error, result) => {
+        connection.query('SELECT * FROM product ORDER BY id DESC', (error, result) => {
             // console.log(result);
             res.render('news/news.ejs', {
                 product: result,
@@ -81,7 +81,6 @@ module.exports = app => {
                     }
 
                 });
-                console.log(data);
                 await browser.close();
 
                 connection.query('SELECT * FROM product WHERE asin_code =' + "'" + asin_code + "';", (error, result) => {
@@ -235,7 +234,6 @@ module.exports = app => {
     app.post('/pendingproduct', (req, res) => {
 
         connection.query('SELECT * FROM product WHERE CAST(`update` AS DATE) < CURDATE() OR `update` IS NULL;', (error, result) => {
-            console.log(result.length);
 
             function playRecording() {
                 for (var i = 0; i < result.length; i++) {
@@ -327,7 +325,6 @@ module.exports = app => {
 
         connection.query('SELECT * FROM product', (error, result) => {
             const jsonProducts = JSON.parse(JSON.stringify(result));
-            //console.log(jsonProducts);
             let workbook = new excel.Workbook(); //creating workbook
             let worksheet = workbook.addWorksheet('result'); //creating worksheet
             worksheet.columns = [
